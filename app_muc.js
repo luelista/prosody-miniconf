@@ -219,15 +219,11 @@ function postMsg(room, from, text, xmppid, jid, xmppchildren) {
         console.log("   postMsg",err,msg);
       });
       
-      var notify = getRoomProp(room, "notify-airgram", "").split(/,\s*/);
+      var notify = getRoomProp(room, "notify-pushover", "").split(/,\s*/);
       for(var i in notify) {
-        if(notify[i])pushToAirgram(notify[i], room+"/"+from+": "+text);
+        if(notify[i])pushToPushover(notify[i], from+" in "+room, text);
       }
       
-      var notify2 = getRoomProp(room, "notify-boxcar", "").split(/,\s*/);
-      for(var i in notify2) {
-        if(notify2[i])pushToBoxcar(notify2[i], from+": "+text.substr(0,60), text);
-      }
   }
 }
 
@@ -834,52 +830,20 @@ function storePastebin(messageText, callback) {
       }
   );
 }
-function subscribeToAirgram(email) {
-  var request = require('request');
-  if(!config.airgramAuth) {
-    pushToAirgram(email, "Welcome to chat notifications :-)"); return;
-  }
-  
-  request.post(
-      {
-        uri: "https://api.airgramapp.com/1/subscribe",
-        form: { email: email },
-        'auth': config.airgramAuth
-      },
-      function (error, response, body) {
-      }
-  );
-}
-function pushToAirgram(email, messageText) {
-  var request = require('request');
-  var apiEndpoint = (config.airgramAuth 
-                  ? 'https://api.airgramapp.com/1/send' 
-                  : 'https://api.airgramapp.com/1/send_as_guest');
-  request.post(
-      {
-        uri: apiEndpoint, rejectUnauthorized: false, 
-        form: { email: email, msg: messageText },
-        'auth': config.airgramAuth
-      },
-      function (error, response, body) {
-        //console.log("Airgram response: ",email,messageText,response,error,body);
-        console.log("Airgram respone: ",body);
-      }
-  );
-}
-function pushToBoxcar(token, title, messageText) {
+
+
+function pushToPushover(token, title, messageText, callback /* (statuscode) */ ) {
   var request = require('request');
   
   request.post(
       {
-        uri: 'https://new.boxcar.io/api/notifications',
+        uri: 'https://api.pushover.net/1/messages.json',
         form: {
-          "user_credentials": token, "notification[title]": title, "notification[long_message]": messageText,
-          "notification[sound]": "bell-triple", "notification[source_name]": myJid, 
-          "notification[icon_url]": "https://raw.githubusercontent.com/max-weller/miniConf/master/Icons/AppIcon/Jabber64.png"
+          "token": config.pushover.token, 'user': token, "title": title, "message": messageText
         } 
       },
       function (error, response, body) {
+              if (callback) callback( response && response.statusCode );
       }
   );
 }
