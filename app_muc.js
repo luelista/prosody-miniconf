@@ -21,7 +21,7 @@ var config = configModule[configSection];
 
 console.log("Using configuration section:    " + configSection);
 
-var db = require ('./dbconnect2.js')(config);
+var db = require ('./db_models.js')(config);
 
 console.log(new Date());
 
