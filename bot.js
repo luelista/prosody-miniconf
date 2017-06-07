@@ -135,16 +135,21 @@
       }
       break;
     
-    case "airgram-subscribe":
-      if ((!params) || params.indexOf("@")<1) { botsend(false, "Failed: please provide email address as parameter."); }
+    case "pushover":
+      if ((!params) || params.length<5) { botsend(false, "Failed: please provide a valid user token."); }
       params=params.trim();
-      var subscribers = getRoomProp(r[1], "notify-airgram", "");
-      if (subscribers.length>0) subscribers += ",";
-      subscribers += params;
-      setRoomProp(r[1], "notify-airgram", subscribers);
-      subscribeToAirgram(params);
-      botsend(false, "You're subscribed to this room now.");
-      
+      pushToPushover(params, r[1], 'You will be notified of new messages in XMPP room '+r[1]+'@'+r[2], function(statusCode) {
+              if (statusCode == 200) {
+                      var subscribers = getRoomProp(r[1], "notify-pushover", "");
+                      if (subscribers.length>0) subscribers += ",";
+                      subscribers += params;
+                      setRoomProp(r[1], "notify-pushover", subscribers);
+                      subscribeToAirgram(params);
+                      botsend(false, "You're subscribed to this room now.");
+              } else {
+                      botsend(false, 'Subscription failed. Pushover API returned code '+statusCode);
+              }
+      });
     case "op":
       user.xmppaffil = 'admin'; user.xmpprole = 'moderator';
       broadcastRoom(r[1], 'presence', getPresenceMessage({ nick: user.nick, type: 'jabber', id: stanza_fromJid }, true));
@@ -271,7 +276,8 @@
               '\r\n  /msg "<nickname>" <private message to send>'+
               '\r\n  /prop <property name>[ = <property value>]'+
               '\r\n  /s, /rem are valid abbreviations'+
-              '\r\n  /fullhistory <number of stanzas>');
+              '\r\n  /fullhistory <number of stanzas>'+
+              '\r\n  /pushover <your user key>');
       break;
     
     case "who":

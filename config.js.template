@@ -12,11 +12,9 @@ module.exports = {
     xmppComponentSecret : '<component secret>',
     
 		
-		/*  optional: Airgram api token - if not set, send_as_guest is used (rate 
-		 *  limited to 50 unique recps/day)
-		 */
+		/*  optional: Pushover api token */
 		
-    // airgramAuth         : { 'user':'<airgram key>', 'pass':'<airgram secret>' }
+    // pushover         : { 'api_token':'<pushover api token>' }
     
   }
 ,
