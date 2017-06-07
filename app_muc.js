@@ -814,21 +814,20 @@ function createUploadSlot(stanza_id, sender, filename, size, contentType, callba
 }
 
 function storePastebin(messageText, callback) {
-  var request = require('request');
-
-  request.post(
-      { uri: 'http://paste.teamwiki.de/api/',
-      rejectUnauthorized: false, form: { content: messageText, lexer: 'plain', format: 'url', expires: 'never' } },
-      function (error, response, body) {
-          if (!error && response.statusCode == 200) {
-            messageText=messageText.substr(0,messageText.indexOf("\n")==-1?300:messageText.indexOf("\n"));
-              callback(messageText+"\n"+"[*** snip  "+body.toString().trim()+"  ***]");
-          } else {
-            console.log(" ! Unable to shorten message: ",error,response&&response.statusCode,body);
-            callback(messageText);
-          }
-      }
-  );
+        const child_process = require('child_process');
+        const child = child_process.spawn('paste.sh', {  });
+        child.stdin.write(messageText);
+        var url = "";
+        child.stdout.on('data', (chunk) => { url += chunk; });
+        child.on('end', (code) => {
+                if (code == 0) {
+                        messageText=messageText.substr(0,messageText.indexOf("\n")==-1?300:messageText.indexOf("\n"));
+                        callback(messageText+"\n"+"[*** snip  "+url.toString().trim()+"  ***]");
+                } else {
+                        console.log(" ! Unable to shorten message: ",code,url);
+                        callback(messageText);
+                }
+        });
 }
 
 
