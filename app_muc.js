@@ -809,8 +809,8 @@ function storePastebin(messageText, callback) {
         const child = child_process.spawn('paste.sh', {  });
         child.stdin.write(messageText);
         var url = "";
-        child.stdout.on('data', (chunk) => { url += chunk; });
-        child.on('end', (code) => {
+        child.stdout.on('data', function(chunk) { url += chunk; });
+        child.on('end', function(code) {
                 if (code == 0) {
                         messageText=messageText.substr(0,messageText.indexOf("\n")==-1?300:messageText.indexOf("\n"));
                         callback(messageText+"\n"+"[*** snip  "+url.toString().trim()+"  ***]");
