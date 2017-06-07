@@ -3,7 +3,7 @@ module.exports = function(config) {
         const Sequelize = require('sequelize');
         const sequelize = new Sequelize(config.dbName, config.dbUser, config.dbPassword);
 
-        const UserInfo = sequelize.define('user_info', {
+        const UserInfo = sequelize.define('userInfo', {
                 jid: Sequelize.STRING(255),
                 name: Sequelize.STRING(64),
                 value: Sequelize.TEXT,
@@ -13,12 +13,12 @@ module.exports = function(config) {
                 name: Sequelize.STRING(255),
                 subject: Sequelize.TEXT,
         })
-        const Member = sequelize.define('member', {
+        const RoomMember = sequelize.define('roomMember', {
                 jid: Sequelize.STRING(255),
                 nick: Sequelize.STRING(80),
                 xmppshow: { type: Sequelize.STRING, allowNull: true, defaultValue: null },
         })
-        const RoomProperty = sequelize.define('room_property', {
+        const RoomProperty = sequelize.define('roomProperty', {
                 name: Sequelize.STRING(64),
                 value: Sequelize.TEXT,
         })

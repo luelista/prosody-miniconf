@@ -127,28 +127,26 @@ if (config.httpPort) {
 }
 
 //--> Initialization
-db.mongo.rooms.find().toArray(function(err, results) {
-        if(err) { console.log(" ! couldnt read rooms from database"); return; }
-        
-        for(var i in results) {
+db.Room.findAll({ include: ['roomMembers', 'roomProperties'] }).then(rooms => {
+        for(var i in rooms) {
                 var name = results[i].name;
                 rooms[name] = results[i];
                 var decoded = {};
-                if (rooms[name].members)
-                for(var key in rooms[name].members) decoded[unescape(key)] = rooms[name].members[key];
+                rooms[name].roomMembers.forEach(m => { decoded[unescape(m.jid)] = m; });
                 rooms[name].members = decoded;
+                
+                var props = {};
+                rooms[name].roomProperties.forEach(p => { decoded[p.name] = p.value; });
+                rooms[name].properties = props;
         }
-});
+}).catch(err => { console.log(" ! couldnt read rooms from database", err); });
 
-db.mongo.userinfo.find().toArray(function(err, results) {
-        if(err) { console.log(" ! couldnt read userInfo from database"); return; }
-        
-        for(var i in results) {
-                var name = results[i].user;
-                connectedUsers[name] = results[i];
-        }
-});
-
+db.UserInfo.findAll().then(lines => {
+        lines.forEach(line => {
+                var info = getUserInfo(line.jid);
+                info[line.name] = line;
+        });
+}).catch(err => { console.log(" ! couldnt read userInfo from database", err); });
 
 
 var XMLNS_MUC = "http://jabber.org/protocol/muc";
@@ -233,20 +231,27 @@ function dotescape(s) {
 }
 // New Room Management
 
-function makeSureRoomExists(roomName) {
+function makeSureRoomExists(roomName, ) {
         if (! rooms[roomName]) {
-                rooms[roomName] = { name: roomName, subject: "Untitled room", members: {} };
-                db.mongo.rooms.update({ name: roomName }, rooms[roomName], {upsert:true});
+                return db.Room.create({ name: roomName, subject: "Untitled room" })
+                .then(room => {
+                        rooms[roomName] = room; return room;
+                });
+        } else {
+                return new Promise((resolve, reject) => {
+                        resolve(rooms[roomName]);
+                });
         }
 }
 
 function joinRoom(roomName, userId, data) {
-        makeSureRoomExists(roomName);
-        data.id = userId;
-        rooms[roomName].members[userId] = data;
-        
-        var set = { $set: {} }; set.$set["members."+dotescape(userId)] = data;
-        db.mongo.rooms.update({ name: roomName }, set);
+        makeSureRoomExists(roomName).then(room => {
+                data.id = userId;
+                rooms[roomName].members[userId] = data;
+                
+                var set = { $set: {} }; set.$set["members."+dotescape(userId)] = data;
+                db.mongo.rooms.update({ name: roomName }, set);
+        });
 }
 function leaveRoom(roomName, userId, optional_Status) {
         if (! rooms[roomName] || ! rooms[roomName].members[userId]) return;
@@ -257,7 +262,7 @@ function leaveRoom(roomName, userId, optional_Status) {
         db.mongo.rooms.update({ name: roomName }, set);
         
         if (userData.nick)
-        broadcastRoom(roomName, 'presence', getPresenceMessage(userData, false, optional_Status));
+                broadcastRoom(roomName, 'presence', getPresenceMessage(userData, false, optional_Status));
 }
 function broadcastRoom(roomName, msgType, data) {
         console.log("broadcast",roomName,msgType);
@@ -273,16 +278,16 @@ function broadcastRoom(roomName, msgType, data) {
         }
 }
 function getRoomMembers(roomName) {
-        makeSureRoomExists(roomName);
+        if (! rooms[roomName]) return {};
         return rooms[roomName].members;
 }
 function getRoomMember(roomName, name) {
-        makeSureRoomExists(roomName);
+        if (! rooms[roomName]) return null;
         var mem= rooms[roomName].members;
         if (mem) return mem[name];
 }
 function checkRoomNick(roomName, nick) {
-        makeSureRoomExists(roomName);
+        if (! rooms[roomName]) return null;
         var mem= rooms[roomName].members, nickPrep = nick.replace(/[^A-Za-z0-9]/g, "").toLowerCase();
         for(var k in mem) {
                 var nick2 = mem[k].nick.replace(/[^A-Za-z0-9]/g, "").toLowerCase();
@@ -295,16 +300,20 @@ function checkRoomNick(roomName, nick) {
 function getUserInfo(userJid, item) {
         var username = userJid.replace(/\/.*$/, "");
         if(!connectedUsers[username]) connectedUsers[username] = {};
-        if (item) return connectedUsers[username][item];
+        if (item) return connectedUsers[username][item] && connectedUsers[username][item].value;
         return connectedUsers[username];
 }
 function storeUserInfo(userJid, key, value) {
         var username = userJid.replace(/\/.*$/, "");
         var info = getUserInfo(userJid);
-        if (key) info[key] = value;
-        info.changed = ''+new Date();
-        info.user = username;
-        db.mongo.userinfo.update({user:username}, info, {upsert:true});
+        if (info[key]) {
+                info[key].value = value;
+                info[key].save();
+        } else {
+                db.UserInfo.create({ jid: username, name: key, value: value }).then(newitem => {
+                        info[key] = newitem;
+                });
+        }
 }
 
 
