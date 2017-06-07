@@ -6,6 +6,8 @@ module.exports = {
                 */
 
                 dbName	            : '<mongodb database name>',
+                dbUser	            : '<mysql user>',
+                dbPassword          : '<mysql password>',
                 xmppHost            : '127.0.0.1',
                 xmppPort            : '5347',
                 xmppComponentJid    : 'chat.example.org',
