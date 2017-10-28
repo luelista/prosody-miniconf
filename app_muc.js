@@ -506,10 +506,10 @@ function onXmppStanza(stanza) {
                                                 //broadcastRoom(r[1], 'msg', { by: user.nick, msg: null, ts: +new Date(), xmppid: stanza.attrs.id });
                                                 postMsg(r[1], user.nick, null, stanza.attrs.id, stanza.attrs.from, stanza.children);
                                         }
-                                }
+                                } else console.log("message type ignored");
                                 //var data = { nick: user.nick, msg: stanza.getChildText('body') };
                                 //broadcastRoom(r[1], 'message', data);
-                        }
+                        } else console.log("unknown user ignored");
                 }
         }
 }
@@ -797,7 +797,7 @@ function createUploadSlot(stanza_id, sender, filename, size, contentType, callba
         var parts = filename.match(/^(.*)\.([a-zA-Z0-9]+)$/);console.log(filename,parts);
         if (!parts) parts=['',filename,''];
         if (parts[2]!='jpg'&&parts[2]!='gif'&&parts[2]!='png'&&parts[2]!='webp') parts[2]='txt';
-        filename = parts[1].replace(/[^a-zA-Z0-9_-]/, '') + '.' + parts[2];
+        filename = parts[1].replace(/[^a-zA-Z0-9_-]/g, '') + '.' + parts[2];
         slot.c('put').t(config.httpUpload.baseUrl + 'api/upload/file?uuid=' + id);
         slot.c('get').t(config.httpUpload.baseUrl + '' + id + '_' + filename);
         fs.appendFileSync(config.httpUpload.logfile, sender+'\t'+stanza_id+'\t'+id+'\t'+filename+'\n');
@@ -829,7 +829,7 @@ function pushToPushover(token, title, messageText, callback /* (statuscode) */ )
                 {
                         uri: 'https://api.pushover.net/1/messages.json',
                         form: {
-                                "token": config.pushover.token, "user": token,
+                                "token": config.pushover.api_token, "user": token,
                                 "title": title, "message": messageText
                         } 
                 },
