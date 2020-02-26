@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 console.log("\n---------------------------------------------\n\
 app_muc.js 1.0\n\
-Copyright (c) 2014 Max Weller\n\
+Copyright (c) 2014-2020 Mira Weller\n\
 This program comes with ABSOLUTELY NO WARRANTY; This is free software, and\n\
 you are welcome to redistribute it under certain conditions; see LICENSE\n\
 file in this folder for details.\n\
@@ -750,7 +750,7 @@ function xmppSubjectMessage(room, bynick, to, subject, msgid) {
 }
 
 function xmppErrMes(to, body) {
-        var msg = new xmpp.Element('message', { from: myJid, to: to });
+        var msg = new xmpp.Element('message', { type: 'error', from: myJid, to: to });
         msg.c('body').t(body);
         xmppSend("ERR MES SEND:", msg);
 }
