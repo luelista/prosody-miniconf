@@ -339,7 +339,7 @@ function onXmppStanza(stanza) {
                                 var disco = discoReply(stanza, query), d = disco.getChild('query');
                                 d.c('identity', { category: 'conference', type: 'text', name: 'TeamWiki Chat System' });
                                 d.c('feature', { 'var': 'http://jabber.org/protocol/muc' });
-                                if (config.httpUpload) d.c('feature', { 'var': 'urn:xmpp:http:upload' });
+                                if (config.httpUpload) d.c('feature', { 'var': 'urn:xmpp:http:upload:0' });
                                 xmppSend("sent info stanza : ", disco);
                         }
                         if (query = stanza.getChild('query', "http://jabber.org/protocol/disco#items")) {
@@ -351,9 +351,9 @@ function onXmppStanza(stanza) {
                                 xmppSend("sent items stanza : ", disco);
                         }
                         
-                        if (query = stanza.getChild('request', "urn:xmpp:http:upload")) {
+                        if ((query = stanza.getChild('request', "urn:xmpp:http:upload:0"))) {
                                 try {
-                                        createUploadSlot(stanza.attrs.id, stanza.attrs.from, query.getChildText('filename'), query.getChildText('size'), query.getChildText('content-type'), function(response) {
+                                        createUploadSlot(stanza.attrs.id, stanza.attrs.from, query.attrs['filename'], query.attrs['size'], query.attrs['content-type'], function(response) {
                                                 xmppSend("Upload-Slot reponse: ", response);
                                         });
                                 }catch(ex) {
@@ -791,15 +791,15 @@ function createUploadSlot(stanza_id, sender, filename, size, contentType, callba
         var iq = new xmpp.Element('iq', {
                 type: 'result', from: myJid, to: sender, id: stanza_id
         });
-        var slot = iq.c('slot', { xmlns: 'urn:xmpp:http:upload' });
+        var slot = iq.c('slot', { xmlns: 'urn:xmpp:http:upload:0' });
         var id = guid();
         //var filename = filename.replace(/[^a-zA-Z0-9_.-]/, '');
         var parts = filename.match(/^(.*)\.([a-zA-Z0-9]+)$/);console.log(filename,parts);
         if (!parts) parts=['',filename,''];
         if (parts[2]!='jpg'&&parts[2]!='gif'&&parts[2]!='png'&&parts[2]!='webp') parts[2]='txt';
         filename = parts[1].replace(/[^a-zA-Z0-9_-]/g, '') + '.' + parts[2];
-        slot.c('put').t(config.httpUpload.baseUrl + 'api/upload/file?uuid=' + id);
-        slot.c('get').t(config.httpUpload.baseUrl + '' + id + '_' + filename);
+        slot.c('put').attrs.url=config.httpUpload.baseUrl + 'api/upload/file?uuid=' + id;
+        slot.c('get').attrs.url=config.httpUpload.baseUrl + '' + id + '_' + filename;
         fs.appendFileSync(config.httpUpload.logfile, sender+'\t'+stanza_id+'\t'+id+'\t'+filename+'\n');
         callback(iq);
 }
