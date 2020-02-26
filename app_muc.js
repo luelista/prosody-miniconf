@@ -179,14 +179,14 @@ function getRoomHistory(roomName, beforeTs, amount, afterTs, callbackIter) {
         if (beforeTs && afterTs) query.ts = { $lt: beforeTs, $gt: afterTs };
         query.room = roomName;
         console.log(query);
-        var cursor = db.mongo.messages.find(query); //.sort({_id: -1}).limit(amount).sort({_id: 1});
+        //var cursor = db.mongo.messages.find(query); //.sort({_id: -1}).limit(amount).sort({_id: 1});
         //.toArray(callback)
-        cursor.count(function(err, countNr) {
+        db.mongo.messages.find(query).count(function(err, countNr) {
                 if (err) callbackIter(err, null);
                 else {
                         var toSkip = Math.max(0,countNr-amount);
                         console.log("    getRoomHistory: "+"found "+countNr+", requested "+amount+", skipping "+toSkip);
-                        cursor.sort({_id: 1}).skip(toSkip).forEach(callbackIter);
+                        db.mongo.messages.find(query).sort({_id: 1}).skip(toSkip).forEach(callbackIter);
                 }
         })
         //cursor.forEach(callbackIter);
