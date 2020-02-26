@@ -490,10 +490,10 @@ function onXmppStanza(stanza) {
                                                 } 
                                                 if (messageText && (messageText.charAt(0)=="#" || messageText.charAt(0)=="!" || messageText.charAt(0)=="/")) {
                                                         runBotCommand(r, stanza.attrs.from, messageText, stanza.attrs.id);
-                                                } else if (isMessageOverlyLong(rooms[r[1]], messageText)) {
+                                                /*} else if (isMessageOverlyLong(rooms[r[1]], messageText)) {
                                                         storePastebin(messageText, function(newMsg) {
                                                                 postMsg(r[1], user.nick, newMsg, stanza.attrs.id, stanza.attrs.from, passChildren);
-                                                        });
+                                                        });*/
                                                 } else {
                                                         postMsg(r[1], user.nick, messageText, stanza.attrs.id, stanza.attrs.from, passChildren);
                                                 }
